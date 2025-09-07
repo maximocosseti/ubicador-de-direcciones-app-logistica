@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Triangular Dirección - Cliente</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <style>
+    .container-wide { 
+      width: 900px; 
+      display:flex; 
+      gap:20px; 
+      align-items:flex-start; 
+      margin:50px auto; 
+    }
+    .form-col { flex: 1; }
+    .map-col { flex: 1; min-height: 420px; }
+    #map { height: 420px; border-radius: 10px; overflow:hidden; }
+
+    form input {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    form button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      margin-bottom: 10px;
+    }
+
+    form button:hover { background-color: #0056b3; }
+
+    h2, h3 { margin-bottom: 15px; }
+
+    #resetBtn { display:none; }
+  </style>
+</head>
+<body>
+  <div class="container container-wide">
+    <div class="form-col">
+      <h2>Cargar Dirección</h2>
+
+      <form id="direccionForm">
+        <h3>Datos generales</h3>
+        <input type="text" name="pais" placeholder="País" required>
+        <input type="text" name="provincia" placeholder="Provincia" required>
+        <input type="text" name="partido" placeholder="Partido" required>
+        <input type="text" name="ciudad" placeholder="Barrio" required>
+
+        <h3>Calles</h3>
+        <input type="text" name="calle1" placeholder="Calle 1" required>
+        <input type="text" name="calle2" placeholder="Calle 2" required>
+        <input type="text" name="calle3" placeholder="Calle 3" required>
+
+        <button type="submit">Cargar Dirección</button>
+      </form>
+
+      <button id="resetBtn">Agregar nueva dirección</button>
+      <p id="status" style="margin-top:10px; color:#333;"></p>
+    </div>
+
+    <div class="map-col">
+      <h3>Previsualización en el mapa</h3>
+      <div id="map"></div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+  <script>
+    const map = L.map('map').setView([-34.603722, -58.381592], 12);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    let marker = null;
+
+    function updateMarker(lat, lon, label) {
+      if (!lat || !lon) return;
+      if (marker) {
+        marker.setLatLng([lat, lon]);
+        marker.setPopupContent(label || '');
+      } else {
+        marker = L.marker([lat, lon]).addTo(map).bindPopup(label || '');
+      }
+      marker.openPopup();
+      map.setView([lat, lon], 16);
+    }
+
+    // Enviar al backend
+    document.getElementById('direccionForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.target;
+      const data = Object.fromEntries(new FormData(form));
+
+      const payload = {
+        calles: [
+          { pais: data.pais, provincia: data.provincia, partido: data.partido, ciudad: data.ciudad, calle: data.calle1 },
+          { pais: data.pais, provincia: data.provincia, partido: data.partido, ciudad: data.ciudad, calle: data.calle2 },
+          { pais: data.pais, provincia: data.provincia, partido: data.partido, ciudad: data.ciudad, calle: data.calle3 }
+        ]
+      };
+
+      document.getElementById('status').textContent = "Calculando punto medio...";
+
+      try {
+        const res = await fetch('/api/geocode/midpoint', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+
+        const result = await res.json();
+
+        if (res.ok) {
+          document.getElementById('status').textContent = `Punto medio: (${result.lat}, ${result.lon})`;
+          updateMarker(result.lat, result.lon, "Punto medio");
+
+          // Ocultar form y mostrar reset
+          document.getElementById('direccionForm').style.display = 'none';
+          document.getElementById('resetBtn').style.display = 'block';
+        } else {
+          document.getElementById('status').textContent = "Error: " + (result.error || "No se pudo calcular el punto medio.");
+
+          // También ocultamos el form y mostramos reset
+          document.getElementById('direccionForm').style.display = 'none';
+          document.getElementById('resetBtn').style.display = 'block';
+        }
+      } catch (err) {
+        console.error(err);
+        document.getElementById('status').textContent = "Error de red.";
+        document.getElementById('direccionForm').style.display = 'none';
+        document.getElementById('resetBtn').style.display = 'block';
+      }
+    });
+
+    // Reiniciar flujo
+    document.getElementById('resetBtn').addEventListener('click', () => {
+      document.getElementById('direccionForm').reset();
+      document.getElementById('direccionForm').style.display = 'block';
+      document.getElementById('status').textContent = '';
+      document.getElementById('resetBtn').style.display = 'none';
+
+      if (marker) {
+        map.removeLayer(marker);
+        marker = null;
+      }
+      map.setView([-34.603722, -58.381592], 12);
+    });
+  </script>
+</body>
+</html>

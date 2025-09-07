@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Administrador</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container" style="width: 600px;">
+    <h2>Panel Admin</h2>
+    <table border="1" style="width:100%; margin-top: 20px; border-collapse: collapse;">
+      <thead>
+        <tr style="background:#f0f0f0;">
+          <th>ID</th><th>Cliente</th><th>Dirección</th><th>Estado</th><th>Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="tablaDirecciones"></tbody>
+    </table>
+  </div>
+
+  <script>
+    async function cargarDirecciones() {
+      const res = await fetch("/api/direcciones?estado=incompleta");
+      const data = await res.json();
+
+      const tbody = document.getElementById("tablaDirecciones");
+      tbody.innerHTML = "";
+
+      data.forEach(dir => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${dir.id}</td>
+          <td>${dir.cliente}</td>
+          <td>${dir.calle} ${dir.numero}, ${dir.ciudad}, ${dir.pais}</td>
+          <td>${dir.estado}</td>
+          <td><button onclick="revisar(${dir.id})">Revisar</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function revisar(id) {
+      alert("Revisar dirección con ID: " + id);
+    }
+
+    cargarDirecciones();
+  </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Login</title>
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <div class="container">
+    <h2>Login</h2>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Usuario" required>
+      <input type="password" id="password" placeholder="Contraseña" required>
+      <button type="submit">Ingresar</button>
+    </form>
+    <p>¿Olvidaste tu contraseña? <a href="#">Recuperar</a></p>
+    <p>¿No tienes cuenta? <a href="#">Registrarse</a></p>
+  </div>
+
+  <script>
+    document.getElementById("loginForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const res = await fetch("/api/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: document.getElementById("username").value,
+          password: document.getElementById("password").value
+        })
+      });
+
+      const data = await res.json();
+
+      if (data.rol === "cliente") {
+        window.location.href = "/cliente.html";
+      } else if (data.rol === "admin") {
+        window.location.href = "/admin.html";
+      } else {
+        alert("Login incorrecto");
+      }
+    });
+  </script>
+</body>
+</html>
