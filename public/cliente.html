@@ -1,21 +1,34 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <title>Triangular Dirección - Cliente</title>
   <link rel="stylesheet" href="css/styles.css">
   <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
   <style>
-    .container-wide { 
-      width: 900px; 
-      display:flex; 
-      gap:20px; 
-      align-items:flex-start; 
-      margin:50px auto; 
+    .container-wide {
+      width: 900px;
+      display: flex;
+      gap: 20px;
+      align-items: flex-start;
+      margin: 50px auto;
     }
-    .form-col { flex: 1; }
-    .map-col { flex: 1; min-height: 420px; }
-    #map { height: 420px; border-radius: 10px; overflow:hidden; }
+
+    .form-col {
+      flex: 1;
+    }
+
+    .map-col {
+      flex: 1;
+      min-height: 420px;
+    }
+
+    #map {
+      height: 420px;
+      border-radius: 10px;
+      overflow: hidden;
+    }
 
     form input {
       display: block;
@@ -38,13 +51,21 @@
       margin-bottom: 10px;
     }
 
-    form button:hover { background-color: #0056b3; }
+    form button:hover {
+      background-color: #0056b3;
+    }
 
-    h2, h3 { margin-bottom: 15px; }
+    h2,
+    h3 {
+      margin-bottom: 15px;
+    }
 
-    #resetBtn { display:none; }
+    #resetBtn {
+      display: none;
+    }
   </style>
 </head>
+
 <body>
   <div class="container container-wide">
     <div class="form-col">
@@ -56,6 +77,7 @@
         <input type="text" name="provincia" placeholder="Provincia" required>
         <input type="text" name="partido" placeholder="Partido" required>
         <input type="text" name="ciudad" placeholder="Barrio" required>
+        <input type="text" name="cp" placeholder="Codigo postal" required>
 
         <h3>Calles</h3>
         <input type="text" name="calle1" placeholder="Calle 1" required>
@@ -103,13 +125,18 @@
       const form = e.target;
       const data = Object.fromEntries(new FormData(form));
 
+      console.log("📩 Data del form:", data); // <-- debug frontend
+
       const payload = {
         calles: [
-          { pais: data.pais, provincia: data.provincia, partido: data.partido, ciudad: data.ciudad, calle: data.calle1 },
-          { pais: data.pais, provincia: data.provincia, partido: data.partido, ciudad: data.ciudad, calle: data.calle2 },
-          { pais: data.pais, provincia: data.provincia, partido: data.partido, ciudad: data.ciudad, calle: data.calle3 }
+          { pais: data.pais, provincia: data.provincia, partido: data.partido, ciudad: data.ciudad, cp: data.cp, calle: data.calle1 },
+          { pais: data.pais, provincia: data.provincia, partido: data.partido, ciudad: data.ciudad, cp: data.cp, calle: data.calle2 },
+          { pais: data.pais, provincia: data.provincia, partido: data.partido, ciudad: data.ciudad, cp: data.cp, calle: data.calle3 }
         ]
       };
+
+
+      console.log("📦 Payload enviado:", payload); // <-- debug frontend
 
       document.getElementById('status').textContent = "Calculando punto medio...";
 
@@ -126,13 +153,10 @@
           document.getElementById('status').textContent = `Punto medio: (${result.lat}, ${result.lon})`;
           updateMarker(result.lat, result.lon, "Punto medio");
 
-          // Ocultar form y mostrar reset
           document.getElementById('direccionForm').style.display = 'none';
           document.getElementById('resetBtn').style.display = 'block';
         } else {
           document.getElementById('status').textContent = "Error: " + (result.error || "No se pudo calcular el punto medio.");
-
-          // También ocultamos el form y mostramos reset
           document.getElementById('direccionForm').style.display = 'none';
           document.getElementById('resetBtn').style.display = 'block';
         }
@@ -159,4 +183,5 @@
     });
   </script>
 </body>
+
 </html>
